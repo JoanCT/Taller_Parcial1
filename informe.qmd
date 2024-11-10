@@ -1,0 +1,83 @@
+---
+title: "Taller 1"
+subtitle: "20582- Anàlisi de Dades"
+date: today
+format:
+  html:
+    theme: lumen
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+editor: visual
+author: "Joan Camps Tomas"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, echo=FALSE}
+library(tidyverse)
+library(readr)
+library(Matrix)
+library(mvtnorm)
+library(MASS)
+```
+
+## Introducció
+
+En els dos darrers anys han irromput amb força les eines d'intel·ligència artificial en el món educatiu. Se creu que l'impacte que això pot tenir sobre els estudiants i les seves competències no té precedents, i s'estan prenent mesures al respecte. Alguns consideren que l'ús abusiu d'aquestes eines per part dels estudiants empitjora el seu aprenentatge. Aquesta és precisament la hipòtesi que posarem a prova: l'ús d'IA empitjora la qualitat d'aprenentatge dels estudiants universitaris.
+
+Per avaluar la hipòtesi, es recullen les dades que a continuació s'especifiquen (en la majoria de casos, significa respondre una pregunta). Les 4 primeres són quantitatives, les 2 posteriors són nomials, i les 3 darreres, ordinals
+
+- Nota mitjana cursos 2021, 2022
+- Nota mitjana cursos 2023, 2024
+- Hores setmanals d'estudi convencional (fora IA)
+- Hores setmanals d'ús d'eines d'IA
+- Quin tipus de grau estudies? (Ciències formals, Enginyeries, Humanitats, Social)
+- Fas servir eines IA de pagament?
+Preguntes a contestar amb Gens-Poc-Suficient-Bastant-Molt
+- Quina importància dones a la AI? 
+- Consider que amb la AI m'esforç manco.
+- Consider que tot el que faig amb AI ho sabria replicar pel teu compte.
+
+Per comprovar la validesa de la hipòtesi, per una banda, si els estudiants amb millors notes utilitzen molta IA, i per l'altra ho comprovarem entre aquells estudiants que han millorat o empitjorat més les qualificacions. També, comprovarem la seva valoració subjectiva.
+
+## Recol·lecció de dades.
+El primer pas consisteix en crear una taula amb les dades que es faran servir per dur a terme l'estudi.
+```{r}
+mitjana <-c(6.8, 6.5, 7, 5) # Mitjanes notes_pre_IA, notes_IA, hores_est, hores_IA
+covar <- matrix(c(15, 7, 5, -2,
+                  7, 18, 3, -0.5,
+                  5, 3, 5, 2,
+                  -2, -0.5, 2, 2.5), 
+                nrow = 4, ncol = 4)
+
+set.seed(1)
+dades_num <- mvrnorm(150, mu = mitjana, Sigma = covar)
+
+# Limitam i ajustam les notes a 1-10
+dades_num[,1] <- pmin(pmax(round(dades_num[,1], 1), 1), 10)
+dades_num[,2] <- pmin(pmax(round(dades_num[,2], 1), 1), 10)
+
+#Taula amb les dades
+IA_estudiants <- data.frame(
+  notes_pre_IA = dades_num[,1],
+  notes_IA = dades_num[,2],
+  hores_est = round(dades_num[,3],1),
+  hores_IA = round(dades_num[,4],1),
+  estudis = sample(c("Socials", "Humanitats", "Ciencies", "Tecnics"), 150, replace = TRUE),
+  Pagament = sample(c("Si", "No"), 150, replace = TRUE),
+  importancia = ordered(sample(1:5, 150, replace = TRUE), labels = c("Gens", "Poc", "Suficient", "Bastant", "Molt")),
+  esforç = ordered(sample(1:5, 150, replace = TRUE), labels = c("Gens", "Poc", "Suficient", "Bastant", "Molt")),
+  replicar = ordered(sample(1:5, 150, replace = TRUE), labels = c("Gens", "Poc", "Suficient", "Bastant", "Molt"))
+)
+
+```
+
+## Anàlisi descriptiu
+
+
+
+
+
