@@ -23,12 +23,13 @@ library(Matrix)
 library(mvtnorm)
 library(GGally)
 library(dplyr)
+library(matlib)
 library(MASS)
 ```
 
 ## Introducció
 
-En els dos darrers anys han irromput amb força les eines d'intel·ligència artificial en el món educatiu. Se creu que l'impacte que això pot tenir sobre els estudiants i les seves competències no té precedents, i s'estan prenent mesures al respecte. Alguns consideren que l'ús abusiu d'aquestes eines per part dels estudiants empitjora el seu aprenentatge. Aquesta és precisament la hipòtesi que posarem a prova: l'ús d'IA empitjora la qualitat d'aprenentatge dels estudiants universitaris.
+En els dos darrers anys han irromput amb força les eines d'intel·ligència artificial (a partir d'ara, IA) en el món educatiu. Se creu que l'impacte que això pot tenir sobre els estudiants i les seves competències no té precedents, i s'estan prenent mesures al respecte. Alguns consideren que l'ús abusiu d'aquestes eines per part dels estudiants empitjora el seu aprenentatge. Aquesta és precisament la hipòtesi que posarem a prova: l'ús (habitual) d'IA empitjora la qualitat d'aprenentatge dels estudiants universitaris.
 
 Per avaluar la hipòtesi, es recullen les dades que a continuació s'especifiquen (en la majoria de casos, significa respondre una pregunta). Les 4 primeres són quantitatives, les 2 posteriors són nomials, i les 3 darreres, ordinals
 
@@ -37,11 +38,11 @@ Per avaluar la hipòtesi, es recullen les dades que a continuació s'especifique
 - Hores setmanals d'estudi convencional (fora IA)
 - Hores setmanals d'ús d'eines d'IA
 - Quin tipus de grau estudies? (Ciències formals, Enginyeries, Humanitats, Social)
-- Fas servir eines IA de pagament?
+- Fas servir eines IA de pagament? (Si, No)
 Preguntes a contestar amb Gens-Poc-Suficient-Bastant-Molt
-- Quina importància dones a la AI? 
-- Consider que amb la AI m'esforç manco.
-- Consider que tot el que faig amb AI ho sabria replicar pel teu compte.
+- Quina importància dones a la IA? 
+- Consider que amb la IA m'esforç manco.
+- Consider que tot els resultats que obtenc amb IA els sabria replicar pel teu compte.
 
 Per comprovar la validesa de la hipòtesi, per una banda, si els estudiants amb millors notes utilitzen molta IA, i per l'altra ho comprovarem entre aquells estudiants que han millorat o empitjorat més les qualificacions. També, comprovarem la seva valoració subjectiva.
 
@@ -56,7 +57,8 @@ covar <- matrix(c(12, 7, 5, -2,
                 nrow = 4, ncol = 4)
 
 set.seed(1)
-dades_num <- mvrnorm(150, mu = mitjana, Sigma = covar)
+n=150
+dades_num <- mvrnorm(n, mu = mitjana, Sigma = covar)
 
 # Limitam i ajustam les notes a 1-10
 dades_num[,1] <- pmin(pmax(round(dades_num[,1], 1), 1), 10)
@@ -81,22 +83,116 @@ IA_estudiants <- data.frame(
 
 
 ## Anàlisi descriptiu
+Cal fer un primer comentari sobre la naturalesa de les dades. Per construcció ja sabem que cada varaible seguirà una distribució normal. Així idò, farem aquesta assumpció d'ara en endavant.
 
-```{r}
+```{r, echo=FALSE}
 #Vegem els gràfics de dispersió
 library(GGally)
 dades_num_2 <- IA_estudiants %>% dplyr::select(estudis, notes_pre_IA, notes_IA, dif_notes, hores_est, hores_IA)
 
-ggpairs(dades_num_2,aes(color=estudis, alpha = 0.7))
+plot = ggpairs(dades_num_2,
+               aes(color=estudis, alpha = 0.7),
+               upper = list(
+              continuous = wrap("cor", size = 3)  # Adjust 'size' to make text smaller
+              ),
+              lower = list(
+               continuous = wrap("points", size = 0.7)  # Example of adjusting points size
+              )
+              ) + theme(text = element_text(size = 10))
+
+plot
 
 ```
 Descrivim a trets generals el conjunt de dades, centrant-nos en aquells aspectes que ens interessen per provar o no la hipòtesi plantejada. S'han agrupat segons la branca de coneixement del grau universitari.
 
-Com era d'esperar, es dona una correlació positiva força significativa entre la mitjana de les notes dels estudiants abans i després de l'adveniment de la IA, especialment en la branca de ciències; i entre les hores d'estudi i les notes obtingudes abans de la IA. Havent aparegut la IA aquesta darrera tendència es segueix notant, però manco significativa (aquí és on podria començar-se a notar un primer efecte d'aquestes eines d'IA). A més, la correlació entre les hores d'ús de IA i la diferència de les notes és postiva (això és, un ús creixent de la IA porta a un creixement en la millora de les notes respecte a abans de la IA). Per altra banda, destaca una correlació negativa notable entre les hores d'ús de eines d'IA i les hores d'estudi tradicional (és a dir, a mesura que els estudiants mostren més hores d'estudi, empren manco la IA), especialment en els alumnes d'humanitats. També, es dona una correlació negativa entre les notes abans de la IA, i les hores d'ús que en fan una vegada la seva irrupció.
+Com era d'esperar, es dona una correlació positiva força significativa entre la mitjana de les notes dels estudiants abans i després de l'adveniment de la IA, especialment en la branca de ciències; i entre les hores d'estudi i les notes obtingudes abans de la IA. Havent aparegut la IA aquesta darrera tendència es segueix notant, però manco significativa (aquí és on podria començar-se a notar un primer efecte d'aquestes eines). A més, la correlació entre les hores d'ús de IA i la diferència de les notes és postiva (això és, un ús creixent de la IA porta a un creixement en la millora de les notes respecte a abans de la IA). Per altra banda, destaca una correlació negativa notable entre les hores d'ús de eines d'IA i les hores d'estudi tradicional (és a dir, a mesura que els estudiants mostren més hores d'estudi, empren manco la IA), especialment en els alumnes d'humanitats. També, es dona una correlació negativa entre les notes abans de la IA, i les hores d'ús que en fan una vegada la seva irrupció.
 
-Ens interessa especialment provar si les correlacions entre les hores d'estudi i les hores de IA és significativa, i entre les 
+Centrant-nos en els objectius de l'estudi, comprovem si dues de les correlacions són significatives.
+```{r, echo=FALSE}
+cor.test(IA_estudiants$hores_IA, IA_estudiants$dif_notes)
+cor.test(IA_estudiants$hores_IA, IA_estudiants$hores_est)
+
+```
+
+Així idò, unes primeres observacions a destacar són el fet que hi ha una correlació positiva entre les hores d'ús d'IA i la la millora en les qualificacions, juntament amb una correlació negativa entre les hores d'estudi convencional i d'ús de IA. De fet, com que els p-valors dels contrasts anteriors són ínfims, podem dir que es poden extendre a la població.
+
+Quant a les mitjanes, sembla ser que la mitjana de diferència entre les notes dels distints tipus de carrera és la mateixa, mentre que hi ha una diferència entre les mitjanes d'ús d'IA per tipus de grau. Comprovem-ho amb un ANOVA d'una via.
+
+```{r, echo=FALSE}
+summary(aov(dif_notes ~ estudis, data=IA_estudiants))
+summary(aov(hores_IA ~ estudis, data=IA_estudiants))
+```
+Ara bé, els p-valors en els dos casos són molt elevats, i no podem dir que hi hagi diferència significativa entre les mitjanes de dites variables.
+
+Calculem ara la variància generalitzada i la variància total de les dades. 
+```{r, echo=FALSE}
+quant <- IA_estudiants %>% dplyr::select( notes_pre_IA, notes_IA, dif_notes, hores_est, hores_IA) 
+print("Variància generalitzada")
+det(cov(quant))
+
+print("Variació total")
+tr(cov(quant))
+```
+Com que la variància generalitzada és molt menor a la variació total, deduim que les variables estan força correlacionades. De fet, si ens fixam el el gràfic presentat, la primera línia de cada grup de correlacions indica la de tota la variable, i veim que en tots els casos es presenten correlacions notables entre les parelles de variables.
+
+## Modelització multinomial
+
+Considerem la vairable aleatòria "replicar", que dona resposta a l'afirmació "Consider que tot els resultats que obtenc amb IA els sabria replicar pel teu compte". La modelitzarem com una distribució multinomial. Per això, haurem d'estimar els seus paràmetres:
+$$ X_{replicar} \sim \text{Multinomial}(n=150, \theta = (\theta_{gens}, \theta_{poc}, \theta_{suficient}, \theta_{bastant}, \theta_{molt}))  $$
+
+Evidentment, farem servir l'estimador de màxima versemblança per a cada probabilitat, el qual coincideix amb la freqüència obtinguda en la mostra.
+
+```{r, echo=FALSE}
+freq <- table(IA_estudiants$replicar)
+freq = freq/n
+params = as.vector(freq)
+```
+A partir de dit model, vegem la probabilitat d'obtenir una seqüència de respostes molt concreta. De 20 estudiants, que 5 afirmin que saben replicar "suficient", 5 "bastant" i 10 "molt" allò que obtenen de la IA.
+```{r, echo=FALSE}
+prob <- dmultinom(x = c(0,0,5,5,10), size = 20, prob = params)
+print(prob)
+
+```
+
+Suposant un escenari quotidià, possiblement els estudiants no afirmin que saben replicar perfectament tot allò que consulten o que no en saben gens, sinó que tendeixin a valors més neutres. Vegem la probabilitat que 3 afirmin que no saben replicar "gens", 12 "poc", 4 "suficient" i 1 "bastant" allò que obtenen de la IA.
+
+```{r, echo=FALSE}
+prob <- dmultinom(x = c(3,12,4,1,0), size = 20, prob = params)
+print(prob)
+```
+Més interessant pel nostre cas pot ser modelitzar una binomial on es combinin per una banda les respostes de "gens" i "poc" i per altra la resta. Així, volem veure la probabilitat que de 20 estudiants, la meitat assumeixin que no saben replicar allò que produeix la IA.
+
+```{r, echo=FALSE}
+#Feim només dues categories, una de "gens" i "poc"
+IA_combinat <- IA_estudiants %>%
+  mutate(replicar_comb = case_when(
+    replicar %in% c("Gens", "Poc") ~ "gens_poc",  
+    TRUE ~ "other"                              
+  ))
+
+freq2 <- table(IA_combinat$replicar_comb)
+freq2 = freq2/n
+params2 = as.vector(freq2)
+prob <- dbinom(x = 10, size = 20, prob = params2[1])
+prob
+
+```
+Segons el model, hi ha una probabilitat del 15% que la meitat dels 20 estudiants enquestats no sàpigue replicar-ho.
 
 
 
+## Regressió multinomial
 
+Provem de modelitzar la variable $X_{\text{notesIA}}$ a partir de les altres tres variables quantitatives. Això és:
+ $$ X_{\text{notesIA}} = \beta_0 + \beta_1 X_{\text{notesPreIA}} + \beta_2 X_{\text{horesEst}} + \beta_3 X_{\text{horesIA}} + \epsilon $$
+```{r, echo=FALSE}
+model_notes <- lm(notes_IA ~ notes_pre_IA + hores_est + hores_IA, data = IA_estudiants)
+summary(model_notes)
+```
+```{r, echo=FALSE}
+model_notes <- lm(notes_IA ~ notes_pre_IA + hores_IA, data = IA_estudiants)
+summary(model_notes)
+```
+ 
 
+---Falta calcular Score i comentar---
