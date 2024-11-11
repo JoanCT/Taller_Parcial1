@@ -21,6 +21,8 @@ library(tidyverse)
 library(readr)
 library(Matrix)
 library(mvtnorm)
+library(GGally)
+library(dplyr)
 library(MASS)
 ```
 
@@ -44,13 +46,13 @@ Preguntes a contestar amb Gens-Poc-Suficient-Bastant-Molt
 Per comprovar la validesa de la hipòtesi, per una banda, si els estudiants amb millors notes utilitzen molta IA, i per l'altra ho comprovarem entre aquells estudiants que han millorat o empitjorat més les qualificacions. També, comprovarem la seva valoració subjectiva.
 
 ## Recol·lecció de dades.
-El primer pas consisteix en crear una taula amb les dades que es faran servir per dur a terme l'estudi.
+El primer pas consisteix en crear una taula amb les dades que es faran servir per dur a terme l'estudi. Una vegada obtingudes les dades, afegim una nova variable que sigui la diferència entre les notes obtingudes abans i després de la IA. Com que les dues variables a restar són normals multivariants, la nova variable també ho serà
 ```{r}
-mitjana <-c(6.8, 6.5, 7, 5) # Mitjanes notes_pre_IA, notes_IA, hores_est, hores_IA
-covar <- matrix(c(15, 7, 5, -2,
-                  7, 18, 3, -0.5,
-                  5, 3, 5, 2,
-                  -2, -0.5, 2, 2.5), 
+mitjana <-c(6.8, 6.5, 12, 5) # Mitjanes notes_pre_IA, notes_IA, hores_est, hores_IA
+covar <- matrix(c(12, 7, 5, -2,
+                  7, 13, 3, -0.5,
+                  5, 3, 7, -2,
+                  -2, -0.5, -2, 2.5), 
                 nrow = 4, ncol = 4)
 
 set.seed(1)
@@ -64,6 +66,7 @@ dades_num[,2] <- pmin(pmax(round(dades_num[,2], 1), 1), 10)
 IA_estudiants <- data.frame(
   notes_pre_IA = dades_num[,1],
   notes_IA = dades_num[,2],
+  dif_notes = dades_num[,2] - dades_num[,1],
   hores_est = round(dades_num[,3],1),
   hores_IA = round(dades_num[,4],1),
   estudis = sample(c("Socials", "Humanitats", "Ciencies", "Tecnics"), 150, replace = TRUE),
@@ -75,7 +78,23 @@ IA_estudiants <- data.frame(
 
 ```
 
+
+
 ## Anàlisi descriptiu
+
+```{r}
+#Vegem els gràfics de dispersió
+library(GGally)
+dades_num_2 <- IA_estudiants %>% dplyr::select(estudis, notes_pre_IA, notes_IA, dif_notes, hores_est, hores_IA)
+
+ggpairs(dades_num_2,aes(color=estudis, alpha = 0.7))
+
+```
+Descrivim a trets generals el conjunt de dades, centrant-nos en aquells aspectes que ens interessen per provar o no la hipòtesi plantejada. S'han agrupat segons la branca de coneixement del grau universitari.
+
+Com era d'esperar, es dona una correlació positiva força significativa entre la mitjana de les notes dels estudiants abans i després de l'adveniment de la IA, especialment en la branca de ciències; i entre les hores d'estudi i les notes obtingudes abans de la IA. Havent aparegut la IA aquesta darrera tendència es segueix notant, però manco significativa (aquí és on podria començar-se a notar un primer efecte d'aquestes eines d'IA). A més, la correlació entre les hores d'ús de IA i la diferència de les notes és postiva (això és, un ús creixent de la IA porta a un creixement en la millora de les notes respecte a abans de la IA). Per altra banda, destaca una correlació negativa notable entre les hores d'ús de eines d'IA i les hores d'estudi tradicional (és a dir, a mesura que els estudiants mostren més hores d'estudi, empren manco la IA), especialment en els alumnes d'humanitats. També, es dona una correlació negativa entre les notes abans de la IA, i les hores d'ús que en fan una vegada la seva irrupció.
+
+Ens interessa especialment provar si les correlacions entre les hores d'estudi i les hores de IA és significativa, i entre les 
 
 
 
