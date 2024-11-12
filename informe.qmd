@@ -148,10 +148,10 @@ bp = barplot(df_3$count, beside = TRUE, names.arg = df_3$replicar, las = 2,
 text(bp, df_3$count, df_3$count, pos = 3, xpd = NA)
 
 bp = barplot(df_2$count, beside = TRUE, names.arg = df_2$esforç, las = 2,
-        main = 'Esforç degut a IA', ylim = c(0,max(df_2$count)+5))
+        main = 'Manco esforç degut a IA', ylim = c(0,max(df_2$count)+5))
 text(bp, df_2$count, df_2$count, pos = 3, xpd = NA)
 ```
---TODO Comentar--
+Observant les gràfiques anteriors, veim que d'entre els estudiants enquestats, n'hi ha més que asseguren no saber replicar els resultats obtinguts amb ajuda de la IA que els que sí saben fer-ho; i la majoria assumeix que gràcies a la IA s'esforça manco en els estudis.
 
 Calculem ara la variància generalitzada i la variància total de les dades.
 
@@ -164,7 +164,7 @@ print("Variació total")
 tr(cov(quant))
 ```
 
-Com que la variància generalitzada és molt menor a la variació total, deduim que les variables estan força correlacionades. De fet, si ens fixam el el gràfic presentat, la primera línia de cada grup de correlacions indica la de tota la variable, i veim que en tots els casos es presenten correlacions notables entre les parelles de variables.
+Com que la variància generalitzada és molt menor a la variació total, deduim que les variables estan força correlacionades, o dit altrament, hi ha redundància entre elles. De fet, si ens fixam el el gràfic presentat, la primera línia de cada grup de correlacions indica la de tota la variable, i veim que en tots els casos es presenten correlacions notables entre les parelles de variables.
 
 ## Modelització multinomial
 
@@ -215,16 +215,32 @@ Segons el model, hi ha una probabilitat del 15% que la meitat dels 20 estudiants
 
 ## Regressió multinomial
 
-Provem de modelitzar la variable $X_{\text{notesIA}}$ a partir de les altres tres variables quantitatives. Això és: $$ X_{\text{notesIA}} = \beta_0 + \beta_1 X_{\text{notesPreIA}} + \beta_2 X_{\text{horesEst}} + \beta_3 X_{\text{horesIA}} + \epsilon $$
+Provem de modelitzar la variable $X_{\text{notesIA}}$ a partir de les altres tres variables quantitatives. Això és: $$ Y=X_{\text{notesIA}} = \beta_0 + \beta_1 X_{\text{notesPreIA}} + \beta_2 X_{\text{horesEst}} + \beta_3 X_{\text{horesIA}} + \epsilon $$
 
 ```{r, echo=FALSE}
 model_notes <- lm(notes_IA ~ notes_pre_IA + hores_est + hores_IA, data = IA_estudiants)
 summary(model_notes)
 ```
+Veim que una dels coeficients té un p-valor associat gran, de manera que repetim la regressió fora tenir en compte la variable $X_{\text{horesEst}}$. Si aquest model fos precís, podríem extreure una conclusió ben interessant: la nota actual dels estudiants s'explica amb la nota que solien treure i l'ús que fan de les eines de la IA, mentre que les hores d'estudi convencional dedicades no són rellevants.
+$$ Y=X_{\text{notesIA}} = \beta_0 + \beta_1 X_{\text{notesPreIA}} + \beta_2 X_{\text{horesIA}} + \epsilon $$
 
 ```{r, echo=FALSE}
 model_notes <- lm(notes_IA ~ notes_pre_IA + hores_IA, data = IA_estudiants)
 summary(model_notes)
 ```
+Ara sí, tots els dos coeficients surten significatius. Tot i així, veim que el valor $R^2$ ajustat surt de 0.2559, que no és massa gran. No diríem que és una bona aproximació.
 
----Falta calcular Score i comentar---
+Calculem la funció d'score d'aquest darrer model. Tenim el model com
+$$  Y = \textbf{X}\beta + \epsilon $$
+on $\textbf{X}= (1,X_{\text{notesPreIA}}, X_{\text{horesIA}})$, $\beta = (\beta_0, \beta_1, \beta_2)'$, $\epsilon \sim N(0, \sigma^2I)$ 
+
+En tal cas, la funció de densitat conjunta és
+$$ f(Y \mid \beta, \sigma^2) = \frac{1}{(2\pi\sigma^2)^{n/2}} \exp\left(-\frac{1}{2\sigma^2}(Y - X\beta)^T(Y - X\beta)\right)$$
+Llavors, prenent logaritmes obtenim:
+
+$$ \ell(\beta, \sigma^2 \mid Y) = -\frac{n}{2} \log(2\pi\sigma^2) - \frac{1}{2\sigma^2}(Y - X\beta)^T(Y - X\beta) $$
+
+En aquest punt podem obtenir la funció d'score derivant respecte del paràmetre $\beta$. Recordem que les derivades involucrades són matricials.
+
+$$ \text{Score}(\beta) = \frac{\partial \ell}{\partial \beta} = \frac{1}{\sigma^2} X^T (Y - X\beta) $$
+La funció d'score es vincula amb la màxima versemblança del paràmetre involucrat. Quan l'score s'anul·la, s'ha trobat un valor del paràmetre $\beta$, en aquest cas, dels coeficients que modelitzen la recta, vinculat a un màxim en la funció de versemblança. Així, aquest valor és el que maximitxa la probabilitat d'obtenir les respostes registrades de $X_\text{notesIA}$ a partir d'una combinació lineal de $X_\text{notesPreIA}$ i $X_\text{horesIA}$. Dit altrament, el valor $\hat\beta$ tal que $\text{Score}(\hat\beta)=0$ dona la millor manera d'explicar la mostra de notes dels estudiants a partir de les notes anteriors a l'adveniment de la IA i del seu ús. Contràriament, si el valor de $\beta$ no anul·la l'score, vol dir que podem trobar un valor millor per maximitxar la precisió del model.
