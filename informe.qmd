@@ -27,18 +27,21 @@ library(matlib)
 library(MASS)
 ```
 
+[Enllaç](https://github.com/JoanCT/Taller_Parcial1.git) d'accés al repositori del treball.
+
 ## Introducció
 
 En els dos darrers anys han irromput amb força les eines d'intel·ligència artificial (a partir d'ara, IA) en el món educatiu. Se creu que l'impacte que això pot tenir sobre els estudiants i les seves competències no té precedents, i s'estan prenent mesures al respecte. Alguns consideren que l'ús abusiu d'aquestes eines per part dels estudiants empitjora el seu aprenentatge. Aquesta és precisament la hipòtesi que posarem a prova: l'ús (habitual) d'IA empitjora la qualitat d'aprenentatge dels estudiants universitaris.
 
-Per avaluar la hipòtesi, es recullen les dades que a continuació s'especifiquen (en la majoria de casos, significa respondre una pregunta). Les 4 primeres són quantitatives, les 2 posteriors són nomials, i les 3 darreres, ordinals
+Per avaluar la hipòtesi, es recullen les dades que a continuació s'especifiquen (en la majoria de casos, significa respondre una pregunta). Les 4 primeres són quantitatives, les 2 posteriors són nominals, i les 3 darreres, ordinals
 
 -   Nota mitjana cursos 2021, 2022
 -   Nota mitjana cursos 2023, 2024
 -   Hores setmanals d'estudi convencional (fora IA)
 -   Hores setmanals d'ús d'eines d'IA
 -   Quin tipus de grau estudies? (Ciències formals, Enginyeries, Humanitats, Social)
--   Fas servir eines IA de pagament? (Si, No) Preguntes a contestar amb Gens-Poc-Suficient-Bastant-Molt
+-   Fas servir eines IA de pagament? (Si, No)
+Preguntes a contestar amb Gens-Poc-Suficient-Bastant-Molt
 -   Quina importància dones a la IA?
 -   Consider que amb la IA m'esforç manco.
 -   Consider que tot els resultats que obtenc amb IA els sabria replicar pel teu compte.
@@ -77,7 +80,7 @@ IA_estudiants <- data.frame(
   hores_est = round(dades_num[,3],1),
   hores_IA = round(dades_num[,4],1),
   estudis = sample(c("Socials", "Humanitats", "Ciencies", "Tecnics"), 150, replace = TRUE),
-  Pagament = sample(c("Si", "No"), 150, replace = TRUE, prob = probs_pagament),
+  pagament = sample(c("Si", "No"), 150, replace = TRUE, prob = probs_pagament),
   importancia = ordered(sample(1:5, 150, replace = TRUE), labels = c("Gens", "Poc", "Suficient", "Bastant", "Molt")),
   esforç = ordered(sample(1:5, 150, replace = TRUE, prob = probs_esforc), labels = c("Gens", "Poc", "Suficient", "Bastant", "Molt")),
   replicar = ordered(sample(1:5, 150, replace = TRUE, prob = probs_replicar ), labels = c("Gens", "Poc", "Suficient", "Bastant", "Molt"))
@@ -151,6 +154,7 @@ bp = barplot(df_2$count, beside = TRUE, names.arg = df_2$esforç, las = 2,
         main = 'Manco esforç degut a IA', ylim = c(0,max(df_2$count)+5))
 text(bp, df_2$count, df_2$count, pos = 3, xpd = NA)
 ```
+
 Observant les gràfiques anteriors, veim que d'entre els estudiants enquestats, n'hi ha més que asseguren no saber replicar els resultats obtinguts amb ajuda de la IA que els que sí saben fer-ho; i la majoria assumeix que gràcies a la IA s'esforça manco en els estudis.
 
 Calculem ara la variància generalitzada i la variància total de les dades.
@@ -211,7 +215,7 @@ prob
 
 ```
 
-Segons el model, hi ha una probabilitat del 15% que la meitat dels 20 estudiants enquestats no sàpigue replicar-ho.
+Segons el model, hi ha una probabilitat del 15% que la meitat dels 20 estudiants enquestats no sàpiga replicar-ho.
 
 ## Regressió multinomial
 
@@ -221,26 +225,83 @@ Provem de modelitzar la variable $X_{\text{notesIA}}$ a partir de les altres tre
 model_notes <- lm(notes_IA ~ notes_pre_IA + hores_est + hores_IA, data = IA_estudiants)
 summary(model_notes)
 ```
-Veim que una dels coeficients té un p-valor associat gran, de manera que repetim la regressió fora tenir en compte la variable $X_{\text{horesEst}}$. Si aquest model fos precís, podríem extreure una conclusió ben interessant: la nota actual dels estudiants s'explica amb la nota que solien treure i l'ús que fan de les eines de la IA, mentre que les hores d'estudi convencional dedicades no són rellevants.
-$$ Y=X_{\text{notesIA}} = \beta_0 + \beta_1 X_{\text{notesPreIA}} + \beta_2 X_{\text{horesIA}} + \epsilon $$
+
+Veim que una dels coeficients té un p-valor associat gran, de manera que repetim la regressió fora tenir en compte la variable $X_{\text{horesEst}}$. Si aquest model fos precís, podríem extreure una conclusió ben interessant: la nota actual dels estudiants s'explica amb la nota que solien treure i l'ús que fan de les eines de la IA, mentre que les hores d'estudi convencional dedicades no són rellevants. $$ Y=X_{\text{notesIA}} = \beta_0 + \beta_1 X_{\text{notesPreIA}} + \beta_2 X_{\text{horesIA}} + \epsilon $$
 
 ```{r, echo=FALSE}
 model_notes <- lm(notes_IA ~ notes_pre_IA + hores_IA, data = IA_estudiants)
 summary(model_notes)
 ```
+
 Ara sí, tots els dos coeficients surten significatius. Tot i així, veim que el valor $R^2$ ajustat surt de 0.2559, que no és massa gran. No diríem que és una bona aproximació.
 
-Calculem la funció d'score d'aquest darrer model. Tenim el model com
-$$  Y = \textbf{X}\beta + \epsilon $$
-on $\textbf{X}= (1,X_{\text{notesPreIA}}, X_{\text{horesIA}})$, $\beta = (\beta_0, \beta_1, \beta_2)'$, $\epsilon \sim N(0, \sigma^2I)$ 
+Calculem la funció d'score d'aquest darrer model. Tenim el model com $$  Y = \textbf{X}\beta + \epsilon $$ on $\textbf{X}= (1,\textbf{X}_{\text{notesPreIA}}, \textbf{X}_{\text{horesIA}})$, $\beta = (\beta_0, \beta_1, \beta_2)'$, $\epsilon \sim N(0, \sigma^2I)$
 
-En tal cas, la funció de densitat conjunta és
-$$ f(Y \mid \beta, \sigma^2) = \frac{1}{(2\pi\sigma^2)^{n/2}} \exp\left(-\frac{1}{2\sigma^2}(Y - X\beta)^T(Y - X\beta)\right)$$
-Llavors, prenent logaritmes obtenim:
+En tal cas, la funció de densitat conjunta és $$ f(Y \mid \beta, \sigma^2) = \frac{1}{(2\pi\sigma^2)^{n/2}} \exp\left(-\frac{1}{2\sigma^2}(Y - X\beta)^T(Y - X\beta)\right)$$ Llavors, prenent logaritmes obtenim:
 
 $$ \ell(\beta, \sigma^2 \mid Y) = -\frac{n}{2} \log(2\pi\sigma^2) - \frac{1}{2\sigma^2}(Y - X\beta)^T(Y - X\beta) $$
 
 En aquest punt podem obtenir la funció d'score derivant respecte del paràmetre $\beta$. Recordem que les derivades involucrades són matricials.
 
-$$ \text{Score}(\beta) = \frac{\partial \ell}{\partial \beta} = \frac{1}{\sigma^2} X^T (Y - X\beta) $$
-La funció d'score es vincula amb la màxima versemblança del paràmetre involucrat. Quan l'score s'anul·la, s'ha trobat un valor del paràmetre $\beta$, en aquest cas, dels coeficients que modelitzen la recta, vinculat a un màxim en la funció de versemblança. Així, aquest valor és el que maximitxa la probabilitat d'obtenir les respostes registrades de $X_\text{notesIA}$ a partir d'una combinació lineal de $X_\text{notesPreIA}$ i $X_\text{horesIA}$. Dit altrament, el valor $\hat\beta$ tal que $\text{Score}(\hat\beta)=0$ dona la millor manera d'explicar la mostra de notes dels estudiants a partir de les notes anteriors a l'adveniment de la IA i del seu ús. Contràriament, si el valor de $\beta$ no anul·la l'score, vol dir que podem trobar un valor millor per maximitxar la precisió del model.
+$$ \text{Score}(\beta) = \frac{\partial \ell}{\partial \beta} = \frac{1}{\sigma^2} X^T (Y - X\beta) $$ La funció d'score es vincula amb la màxima versemblança del paràmetre involucrat. Quan l'score s'anul·la, s'ha trobat un valor del paràmetre $\beta$, en aquest cas, dels coeficients que modelitzen la recta, vinculat a un màxim en la funció de versemblança. Així, aquest valor és el que maximitxa la probabilitat d'obtenir les respostes registrades de $X_\text{notesIA}$ a partir d'una combinació lineal de $X_\text{notesPreIA}$ i $X_\text{horesIA}$. Dit altrament, el valor $\hat\beta$ tal que $\text{Score}(\hat\beta)=0$ dona la millor manera d'explicar la mostra de notes dels estudiants a partir de les notes anteriors a l'adveniment de la IA i del seu ús. Contràriament, si el valor de $\beta$ no anul·la l'score, vol dir que podem trobar un valor millor per maximitxar la precisió del model.
+
+## Contrast medianes multivariant
+En aquesta secció realitzarem un contrast multivariant de dues mitjanes, entre les subpoblacions d'estudiants que fan servir eines de pagament i els que no.
+Primer feim el test amb la funció predefinida de R:
+```{r, echo = FALSE}
+library(Hotelling)
+pagament = IA_estudiants %>% subset(pagament=="Si") %>% dplyr::select( notes_IA, hores_est, hores_IA)
+n1=nrow(pagament)
+p=ncol(pagament)
+
+no_pagament = IA_estudiants %>% subset(pagament=="No") %>% dplyr::select( notes_IA, hores_est, hores_IA)
+n2=nrow(no_pagament)
+
+print(hotelling.test(pagament, no_pagament))
+
+```
+Obtenim un p-valor elevat, i per tant assumim que les mitjanes són iguals. Així, no podem dir que hi hagi diferència entre les mitjanes de notes obtingudes, hores d'estudi convencional i hores d'ús de IA dels estudiants que fan servir eines d'IA gratuïtes i no.
+
+Vegem ara el desenvolupament teòric. Suposarem que les matrius de covariàncies són desconegudes. En tal cas, l'estadístic de contrast ve donat per:
+
+$$ \frac{n_1 + n_2 - 1 - p}{(n_1 + n_2 - 2)p} \frac{n_1 n_2}{n_1 + n_2} \left(\bar{x} - \bar{y}\right)' \hat{\mathbf{S}}^{-1} \left(\bar{x} - \bar{y}\right) \sim F^p_{n_1 + n_2 - 1 - p} $$
+
+on  
+$$ \hat{\mathbf{S}} = \frac{n_1 \mathbf{S}_1 + n_2 \mathbf{S}_2}{n_1 + n_2 - 2} $$
+i $S_1, S_2$ són les matrius de covariància poblacional per cada població. 
+
+```{r, echo = FALSE}
+
+S1=((n1-1)/n1)*cov(pagament)
+S2=((n2-1)/n2)*cov(no_pagament)
+S_tit = (n1*S1+n2*S2)/(n1+n2-2)
+x=colMeans(pagament)
+y=colMeans(no_pagament)
+
+est = (((n1+n2-1-p)*(n1*n2))/((n1+n2-2)*p*(n1+n2)))*t((x-y))%*%inv(S_tit)%*%(x-y)
+print("L'estadístic és: ")
+print(est[1,1])
+
+```
+Obtenguem el p-valor de l'estadístic a partir de la distribució coneguda:
+```{r, echo = FALSE}
+p_val = 1-pf(est, p, n1+n2-1-p)
+print(p_val[1,1])
+
+```
+Com esperàvem, arribam al mateix valor que abans, i per tant no tenim indicis suficients per rebutjar la hipòtesi nul·la. Per tant, assumim que ambdós grups d'estudiants presenten el mateix vector de mitjanes
+
+
+
+
+## Conclusions
+
+--TODO: Refer introducció per posar més concretament quins són els objectius. Fer conclusions--
+
+## Bibliografia
+
+1.  [Análisis de datos - 3  Inferencia multivariante en poblaciones normales](https://aprender-uib.github.io/AD/t3_inferencia.html#contraste-de-hip%C3%B3tesis-multivariantes).
+
+2.  Cuadras, C. M. (1981) Métodos de Análisis Multivariante. Capítulo 2: Normalidad Multivariante.
+
+3.  Apunts de l'assignatura sobre regressió lineal i contrasts d'hipòtesis.
