@@ -133,6 +133,26 @@ summary(aov(hores_IA ~ estudis, data=IA_estudiants))
 
 Ara bé, els p-valors en els dos casos són molt elevats, i no podem dir que hi hagi diferència significativa entre les mitjanes de dites variables.
 
+```{r}
+par(mfrow = c(1, 2))
+
+df_3 <- IA_estudiants %>%
+    group_by(replicar) %>%
+    summarise(count = n())
+df_2 <- IA_estudiants %>%
+    group_by(esforç) %>%
+    summarise(count = n())
+
+bp = barplot(df_3$count, beside = TRUE, names.arg = df_3$replicar, las = 2,
+        main = 'Puc replicar tasca IA', ylim = c(0,max(df_3$count)+5))
+text(bp, df_3$count, df_3$count, pos = 3, xpd = NA)
+
+bp = barplot(df_2$count, beside = TRUE, names.arg = df_2$esforç, las = 2,
+        main = 'Esforç degut a IA', ylim = c(0,max(df_2$count)+5))
+text(bp, df_2$count, df_2$count, pos = 3, xpd = NA)
+```
+--TODO Comentar--
+
 Calculem ara la variància generalitzada i la variància total de les dades.
 
 ```{r, echo=FALSE}
