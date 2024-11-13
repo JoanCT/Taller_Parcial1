@@ -268,10 +268,10 @@ model_notes <- lm(notes_IA ~ notes_pre_IA + hores_est + hores_IA, data = IA_estu
 summary(model_notes)
 ```
 
-Veim que un dels coeficients té un p-valor associat gran, de manera que repetim la regressió fora tenir en compte la variable $X_{\text{horesEst}}$. Si aquest model fos precís, podríem extreure una conclusió ben interessant: la nota actual dels estudiants s'explica amb la nota que solien treure i l'ús que fan de les eines de la IA, mentre que les hores d'estudi convencional dedicades no són rellevants. $$ Y=X_{\text{notesIA}} = \beta_0 + \beta_1 X_{\text{notesPreIA}} + \beta_2 X_{\text{horesIA}} + \epsilon $$
+Veim que un dels coeficients té un p-valor associat gran, de manera que repetim la regressió fora tenir en compte la variable $X_{\text{horesEst}}$, ni l'"intercept". Si aquest model fos precís, podríem extreure una conclusió ben interessant: la nota actual dels estudiants s'explica amb la nota que solien treure i l'ús que fan de les eines de la IA, mentre que les hores d'estudi convencional dedicades no són rellevants. $$ Y=X_{\text{notesIA}} = \beta_0 + \beta_1 X_{\text{notesPreIA}} + \beta_2 X_{\text{horesIA}} + \epsilon $$
 
 ```{r, echo=FALSE}
-model_notes <- lm(notes_IA ~ notes_pre_IA + hores_IA, data = IA_estudiants)
+model_notes <- lm(notes_IA ~ notes_pre_IA + hores_IA -1, data = IA_estudiants)
 coeficients = coef(model_notes)
 sigma=sigma(model_notes)
 summary(model_notes)
@@ -298,7 +298,7 @@ fig
 
 ```
 
-Ara sí, els dos coeficients de les variables surten significatius. Tot i així, veim que el valor $R^2$ ajustat surt de 0.2559, que no és massa gran. No diríem que és una bona aproximació.
+Ara sí, els dos coeficients de les variables surten significatius. Tot i així, veim que el valor $R^2$ ajustat surt de 0.871, que és prou elevat. Diríem que és una bona aproximació.
 
 Calculem la funció d'score d'aquest darrer model. Tenim el model com $$  Y = \textbf{X}\beta + \epsilon $$ on $\textbf{X}= (1,\textbf{X}_{\text{notesPreIA}}, \textbf{X}_{\text{horesIA}})$, $\beta = (\beta_0, \beta_1, \beta_2)'$, $\epsilon \sim N(0, \sigma^2I)$
 
@@ -315,7 +315,6 @@ Podem comprovar fàcilment que els coeficients obtinguts, $\hat \beta$, en el da
 ```{r, echo=FALSE}
 X= IA_estudiants %>% dplyr::select( notes_pre_IA, hores_IA)
 X = as.matrix(X)
-X=cbind(1,X)
 Y=fitted_values
 coeficients = as.vector(coeficients)
 score_beta=as.vector(t(X)%*%(Y-X%*%coeficients))*1/(sigma^2)
@@ -379,7 +378,7 @@ La majoria dels estudiants enquestats assegura esforçar-se manco gràcies a la 
 
 S'ha observat que quant millors eren les qualificacions dels estudiants abans de la IA, disminueix l'ús que en fan en l'actualitat. A més, un major nombre d'hores d'estudi convencional es vincula amb un menor ús de IA. Tot això pareix indicar que els estudiants que han adoptat més àmpliament aquestes eines són els que rendien pitjor. Això es pot relacionar amb el fet que es dona una tendència a l'alça en la millora de les notes a partir del 2023 i un major ús de la IA. Per tant, és evident que l'ús de la IA porta a una millora en les qualificacions.
 
-Finalment, s'han intentat explicar les notes actuals dels estudiants a partir d'una relació lineal de les notes prèvies, les hores d'estudi i l'ús de la IA. S'ha vist que les hores d'estudi no hi juguen cap paper significatiu en aquesta equació, de manera que s'ha desvinculat les qualificacions amb les hores d'estudi. El model final intenta explicar les notes actuals únicament a partir de les notes anteriors i l'ús de la IA, i encara que és ben poc precís, funciona millor que el primer presentat. Amb això deduïm que d'ençà de la irrupció d'aquestes eines, el seu ús és més determinant que no les hores d'estudi (però s'ha de tenir en compte que s'avaluen les notes anteriors a la IA, i per tant ja inclou tendències dels estudiants).
+Finalment, s'han intentat explicar les notes actuals dels estudiants a partir d'una relació lineal de les notes prèvies, les hores d'estudi i l'ús de la IA. S'ha vist que les hores d'estudi no hi juguen cap paper significatiu en aquesta equació, de manera que s'ha desvinculat les qualificacions amb les hores d'estudi. El model final intenta explicar les notes actuals únicament a partir de les notes anteriors i l'ús de la IA, i és ben precís. Amb això deduïm que d'ençà de la irrupció d'aquestes eines, el seu ús és més determinant que no les hores d'estudi (però s'ha de tenir en compte que s'avaluen les notes anteriors a la IA, i per tant ja inclou tendències dels estudiants).
 
 Tot junt, l'ús de la IA es vincula amb una millora en les notes, la qual no s'explica amb les hores d'estudi. A més, es veu que és una eina que han adoptat més àmpliament els estudiants que rendien pitjor, i sol portar resultats per millorar qualificacions. Amb tot, les males pràctiques existeixen, i no són pocs els que les adopten de manera conscient. Llavors, si una eina externa permet als estudiants millorar les qualificacions esforçant-se poc i sense adquirir part d'aquests coneixements, podem concloure que, en certa manera, l'ús de la IA empitjora la qualitat d'aprenentatge.
 
